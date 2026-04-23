@@ -16,24 +16,23 @@ Imagine AI is a powerful, beautifully designed "mini Canva" style text-to-image 
 ## Screenshots
 
 ### 1. Secure Authentication
-*(Drop your login screenshot here)*
-![Login Screen](screenshots/login.png)
+<img width="676" height="818" alt="Screenshot 2026-04-23 141013" src="https://github.com/user-attachments/assets/1f659a41-0e29-4fda-bcb6-15b3be473cad" />
+
 
 ### 2. Chat Interface
-*(Drop your chat screenshot here)*
-![Chat Screen](screenshots/chat.png)
+<img width="1894" height="854" alt="Screenshot 2026-04-23 141643" src="https://github.com/user-attachments/assets/a3d4e94e-e14c-4b8c-a4c4-d0d792d9249a" />
+
 
 ### 3. Image Generation
-*(Drop your generation screenshot here)*
-![Generation](screenshots/generation.png)
+<img width="1903" height="849" alt="Screenshot 2026-04-23 151450" src="https://github.com/user-attachments/assets/a7e844b3-b8d1-4e49-abfe-124a62f970d8" />
+
 
 ### 4. AI Photo Editor
-*(Drop your editor screenshot here)*
-![AI Editor](screenshots/editor.png)
+<img width="1896" height="832" alt="Screenshot 2026-04-23 151527" src="https://github.com/user-attachments/assets/43934156-69f1-4365-b0f4-4a5ccffdaaba" />
 
 ### 5. Personal Gallery
-*(Drop your gallery screenshot here)*
-![Gallery](screenshots/gallery.png)
+<img width="1513" height="712" alt="Screenshot 2026-04-23 151820" src="https://github.com/user-attachments/assets/90722983-5b06-4b4d-80e9-6513e8435a43" />
+
 
 ## Installation & Setup
 1. Clone the repository: `git clone <repository-url>`
