@@ -33,6 +33,10 @@ Imagine AI is a powerful, beautifully designed "mini Canva" style text-to-image 
 ### 5. Personal Gallery
 <img width="1513" height="712" alt="Screenshot 2026-04-23 151820" src="https://github.com/user-attachments/assets/90722983-5b06-4b4d-80e9-6513e8435a43" />
 
+### 6. Editting Bar
+<img width="1162" height="878" alt="Screenshot 2026-04-27 093453" src="https://github.com/user-attachments/assets/5f552c81-043a-4ae1-b3d4-497a63d513c0" />
+
+
 
 ## Installation & Setup
 1. Clone the repository: `git clone <repository-url>`
