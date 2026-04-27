@@ -34,10 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const editorModal = document.getElementById('editorModal');
     const closeEditorBtn = document.getElementById('closeEditorBtn');
-    const editorImagePreview = document.getElementById('editorImagePreview');
-    const editPromptInput = document.getElementById('editPromptInput');
+    const editorCanvas = document.getElementById('editorCanvas');
+    const editHue = document.getElementById('editHue');
+    const editBrightness = document.getElementById('editBrightness');
+    const editContrast = document.getElementById('editContrast');
+    const editSaturation = document.getElementById('editSaturation');
+    const resetEditBtn = document.getElementById('resetEditBtn');
     const applyEditBtn = document.getElementById('applyEditBtn');
-    const editorLoading = document.getElementById('editorLoading');
+    
+    let editorCtx = editorCanvas ? editorCanvas.getContext('2d') : null;
+    let currentEditImg = null;
 
     // --- State ---
     let token = localStorage.getItem('imagineAIToken');
@@ -91,14 +97,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                google.accounts.id.initialize({
-                    client_id: config.googleClientId,
-                    callback: handleCredentialResponse
-                });
-                google.accounts.id.renderButton(
-                    document.getElementById("googleSignInDiv"),
-                    { theme: "filled_blue", size: "large", type: "standard", shape: "pill", text: "continue_with" }
-                );
+                const initGoogle = () => {
+                    if (typeof google !== 'undefined') {
+                        google.accounts.id.initialize({
+                            client_id: config.googleClientId,
+                            callback: handleCredentialResponse
+                        });
+                        google.accounts.id.renderButton(
+                            document.getElementById("googleSignInDiv"),
+                            { theme: "filled_blue", size: "large", type: "standard", shape: "pill", text: "continue_with" }
+                        );
+                    } else {
+                        setTimeout(initGoogle, 100);
+                    }
+                };
+                initGoogle();
             } else {
                 document.getElementById('googleAuthSetupMsg').classList.remove('hidden');
             }
@@ -492,11 +505,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) { console.error('Failed to save', err); }
         } else if (btn.classList.contains('edit-action')) {
-            editorImagePreview.src = btn.dataset.url;
-            editorModal.dataset.url = btn.dataset.url; // store url for apply
-            editorModal.classList.remove('hidden');
+            editorModal.dataset.url = btn.dataset.url; // store original url
+            currentEditImg = new Image();
+            currentEditImg.crossOrigin = "Anonymous";
+            currentEditImg.onload = () => {
+                editorCanvas.width = currentEditImg.width;
+                editorCanvas.height = currentEditImg.height;
+                resetSliders();
+                drawEditedImage();
+                editorModal.classList.remove('hidden');
+            };
+            currentEditImg.src = btn.dataset.url;
         }
     });
+
+    function resetSliders() {
+        editHue.value = 0;
+        editBrightness.value = 100;
+        editContrast.value = 100;
+        editSaturation.value = 100;
+    }
+
+    function drawEditedImage() {
+        if (!currentEditImg || !editorCtx) return;
+        
+        // Apply CSS filters to context
+        editorCtx.filter = `hue-rotate(${editHue.value}deg) brightness(${editBrightness.value}%) contrast(${editContrast.value}%) saturate(${editSaturation.value}%)`;
+        
+        editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+        editorCtx.drawImage(currentEditImg, 0, 0, editorCanvas.width, editorCanvas.height);
+    }
+
+    if (editHue) editHue.addEventListener('input', drawEditedImage);
+    if (editBrightness) editBrightness.addEventListener('input', drawEditedImage);
+    if (editContrast) editContrast.addEventListener('input', drawEditedImage);
+    if (editSaturation) editSaturation.addEventListener('input', drawEditedImage);
+    
+    if (resetEditBtn) {
+        resetEditBtn.addEventListener('click', () => {
+            resetSliders();
+            drawEditedImage();
+        });
+    }
 
     // --- Modal Logic ---
     myGalleryBtn.addEventListener('click', async () => {
@@ -524,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     closeGalleryBtn.addEventListener('click', () => galleryModal.classList.add('hidden'));
-    closeEditorBtn.addEventListener('click', () => editorModal.classList.add('hidden'));
+    if (closeEditorBtn) closeEditorBtn.addEventListener('click', () => editorModal.classList.add('hidden'));
 
     // Handle Editor Download clicks in gallery modal
     galleryGrid.addEventListener('click', (e) => {
@@ -537,42 +587,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    applyEditBtn.addEventListener('click', async () => {
-        const prompt = editPromptInput.value.trim();
-        const url = editorModal.dataset.url;
-        if (!prompt || !url) return;
-
-        applyEditBtn.disabled = true;
-        editorLoading.classList.remove('hidden');
-
-        try {
-            const response = await fetch('/api/edit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ prompt: prompt, image_url: url, sessionId: currentSessionId })
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error);
-
-            editorModal.classList.add('hidden');
+    if (applyEditBtn) {
+        applyEditBtn.addEventListener('click', async () => {
+            if (!editorCanvas) return;
+            applyEditBtn.disabled = true;
+            applyEditBtn.textContent = 'Saving...';
             
-            // Append edited image message
-            renderMessage({ 
-                role: 'assistant', 
-                content: `Here is your edited image: "${prompt}"`,
-                image_url: data.image,
-                prompt_used: prompt,
-                created_at: new Date().toISOString()
-            });
-            scrollToBottom();
+            const finalBase64 = editorCanvas.toDataURL('image/jpeg', 0.9);
 
-        } catch (e) {
-            alert('Edit Failed: ' + e.message);
-        } finally {
-            applyEditBtn.disabled = false;
-            editorLoading.classList.add('hidden');
-            editPromptInput.value = '';
-        }
-    });
+            try {
+                const response = await fetch('/api/edit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ image_url: finalBase64, sessionId: currentSessionId, prompt: "Manual Adjustments" })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+
+                editorModal.classList.add('hidden');
+                
+                // Append edited image message
+                renderMessage({ 
+                    role: 'assistant', 
+                    content: `Here is your manually edited image:`,
+                    image_url: data.image,
+                    prompt_used: "Manual Adjustments",
+                    created_at: new Date().toISOString()
+                });
+                scrollToBottom();
+
+            } catch (e) {
+                alert('Edit Failed: ' + e.message);
+            } finally {
+                applyEditBtn.disabled = false;
+                applyEditBtn.textContent = 'Save Edited Image';
+            }
+        });
+    }
 
 });

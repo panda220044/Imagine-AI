@@ -339,34 +339,15 @@ app.post('/api/gallery', authenticateToken, (req, res) => {
 });
 
 // --- Edit Endpoint ---
-app.post('/api/edit', authenticateToken, async (req, res) => {
+app.post('/api/edit', authenticateToken, (req, res) => {
     try {
         const { image_url, prompt, sessionId } = req.body;
-        if (!image_url || !prompt || !sessionId) return res.status(400).json({ error: 'Missing parameters' });
-
-        const base64Data = image_url.replace(/^data:image\/\w+;base64,/, "");
-        const buffer = Buffer.from(base64Data, 'base64');
-        const blob = new Blob([buffer], { type: 'image/jpeg' });
-
-        const hfToken = process.env.HUGGINGFACE_API_KEY;
-        const { HfInference } = require('@huggingface/inference');
-        const hf = new HfInference(hfToken);
-
-        const imageBlob = await hf.imageToImage({
-            model: 'timbrooks/instruct-pix2pix',
-            inputs: blob,
-            parameters: { prompt: prompt }
-        });
-
-        const imageBuffer = await imageBlob.arrayBuffer();
-        const editedBase64 = Buffer.from(imageBuffer).toString('base64');
-        const mimeType = imageBlob.type || 'image/jpeg';
-        const finalImageUrl = `data:${mimeType};base64,${editedBase64}`;
+        if (!image_url || !sessionId) return res.status(400).json({ error: 'Missing parameters' });
 
         db.run('INSERT INTO messages (session_id, role, content, image_url, prompt_used) VALUES (?, ?, ?, ?, ?)', 
-            [sessionId, 'assistant', `Edited: ${prompt}`, finalImageUrl, prompt]);
+            [sessionId, 'assistant', `Edited image saved.`, image_url, prompt || 'Manual Edit']);
 
-        res.json({ image: finalImageUrl });
+        res.json({ image: image_url });
     } catch (error) {
         console.error('Edit Error:', error.message);
         res.status(500).json({ error: error.message });

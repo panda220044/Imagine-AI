@@ -15,13 +15,8 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 function initDb() {
     db.serialize(() => {
-        // Drop existing tables to apply new schema (safe for local dev)
-        db.run('DROP TABLE IF EXISTS messages');
-        db.run('DROP TABLE IF EXISTS sessions');
-        db.run('DROP TABLE IF EXISTS users');
-
         // Create Users Table (Email as primary login)
-        db.run(`CREATE TABLE users (
+        db.run(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
             username TEXT,
@@ -31,7 +26,7 @@ function initDb() {
         )`);
 
         // Create Sessions Table (Chat Threads)
-        db.run(`CREATE TABLE sessions (
+        db.run(`CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             title TEXT NOT NULL,
@@ -40,7 +35,7 @@ function initDb() {
         )`);
 
         // Create Messages Table
-        db.run(`CREATE TABLE messages (
+        db.run(`CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER,
             role TEXT,
@@ -52,7 +47,7 @@ function initDb() {
         )`);
 
         // Create Saved Images (Portal Gallery) Table
-        db.run(`CREATE TABLE saved_images (
+        db.run(`CREATE TABLE IF NOT EXISTS saved_images (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             image_url TEXT,
